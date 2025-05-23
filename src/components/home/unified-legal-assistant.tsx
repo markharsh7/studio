@@ -175,6 +175,21 @@ export function UnifiedLegalAssistant() {
             toast({title: 'No Insights (Custom Library)', description: 'Could not generate insights from your custom library.', variant: 'destructive'});
         }
 
+        // Save query history for custom library results
+        if (user && !isDemo && (lawsData || precedentsData || checklistData)) {
+          try {
+            await saveQueryHistory({
+              userId: user.uid,
+              query: mainQuery,
+              lawsResult: lawsData || null,
+              precedentsResult: precedentsData || null,
+              checklistResult: checklistData || null,
+            });
+            triggerRefresh(); // Refresh history after saving
+          } catch (error) {
+            console.error('Error saving query history:', error);
+          }
+        }
       } else {
         // Use Cloudflare AutoRAG and Genkit parser for default queries
         const cloudflareResult: FetchCloudflareRagResult = await fetchCloudflareRag({ userQuery: mainQuery });
@@ -206,20 +221,21 @@ export function UnifiedLegalAssistant() {
         } else {
           toast({title: 'No Structured Insights (Cloudflare)', description: 'Could not structure insights from Cloudflare response. The raw response might be incomplete or not in the expected format.', variant: 'destructive'});
         }
-      }
 
-      if (user && !isDemo && (lawsResult || precedentsResult || checklistResult)) {
-        try {
-          await saveQueryHistory({
-            userId: user.uid,
-            query: mainQuery,
-            lawsResult: lawsResult,
-            precedentsResult: precedentsResult,
-            checklistResult: checklistResult,
-          });
-          triggerRefresh(); // Refresh history after saving
-        } catch (error) {
-          console.error('Error saving query history:', error);
+        // Save query history for Cloudflare results
+        if (user && !isDemo) {
+          try {
+            await saveQueryHistory({
+              userId: user.uid,
+              query: mainQuery,
+              lawsResult: { laws: parsedData.laws || [] },
+              precedentsResult: { precedents: parsedData.precedents || [], sourceType: "Cloudflare AutoRAG" },
+              checklistResult: { checklist: parsedData.checklist || [] },
+            });
+            triggerRefresh(); // Refresh history after saving
+          } catch (error) {
+            console.error('Error saving query history:', error);
+          }
         }
       }
 

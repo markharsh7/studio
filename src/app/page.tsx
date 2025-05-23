@@ -44,25 +44,6 @@ function LandingHeader() {
         
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-4 text-sm lg:gap-6">
-          <Link
-            href="#features"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            Features
-          </Link>
-          <Link
-            href="#how-it-works"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            How It Works
-          </Link>
-          <Link
-            href="#pricing"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            Pricing
-          </Link>
-          
           {user ? (
             <>
               <Button size="sm" asChild>
@@ -88,28 +69,6 @@ function LandingHeader() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-background border-b">
           <div className="flex flex-col p-4 space-y-4">
-            <Link
-              href="#features"
-              className="transition-colors hover:text-foreground/80 text-foreground/60 py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Features
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="transition-colors hover:text-foreground/80 text-foreground/60 py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              How It Works
-            </Link>
-            <Link
-              href="#pricing"
-              className="transition-colors hover:text-foreground/80 text-foreground/60 py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            
             <div className="flex flex-col space-y-2 pt-2">
               {user ? (
                 <>
