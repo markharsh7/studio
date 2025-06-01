@@ -10,6 +10,7 @@ import {Label} from '@/components/ui/label';
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {useToast} from '@/hooks/use-toast';
 import { Switch } from "@/components/ui/switch";
+import { FeedbackComponent } from './feedback-component';
 import { Loader2, Scale, FileText, ListChecks, Library, PlusCircle, BookOpenText } from 'lucide-react';
 
 import {identifyLaws, type IdentifyLawsOutput} from '@/ai/flows/identify-laws-flow';
@@ -29,6 +30,7 @@ export function UnifiedLegalAssistant() {
   const { user, isDemo, endDemo } = useAuth();
   const { triggerRefresh } = useHistory();
   const {toast} = useToast();
+  const [currentQueryId, setCurrentQueryId] = useState<string | null>(null);
 
   // Main query states
   const [mainQuery, setMainQuery] = useState('');
@@ -146,6 +148,7 @@ export function UnifiedLegalAssistant() {
     setChecklistResult(null);
 
     try {
+      setIsProcessingQuery(true);
       if (useCustomLibrary) {
         // Use existing Genkit flows for custom library
         const [lawsData, precedentsData, checklistData] = await Promise.all([
@@ -178,13 +181,14 @@ export function UnifiedLegalAssistant() {
         // Save query history for custom library results
         if (user && !isDemo && (lawsData || precedentsData || checklistData)) {
           try {
-            await saveQueryHistory({
+            const queryId = await saveQueryHistory({
               userId: user.uid,
               query: mainQuery,
               lawsResult: lawsData || null,
               precedentsResult: precedentsData || null,
               checklistResult: checklistData || null,
             });
+            setCurrentQueryId(queryId);
             triggerRefresh(); // Refresh history after saving
           } catch (error) {
             console.error('Error saving query history:', error);
@@ -225,13 +229,14 @@ export function UnifiedLegalAssistant() {
         // Save query history for Cloudflare results
         if (user && !isDemo) {
           try {
-            await saveQueryHistory({
+            const queryId = await saveQueryHistory({
               userId: user.uid,
               query: mainQuery,
               lawsResult: { laws: parsedData.laws || [] },
               precedentsResult: { precedents: parsedData.precedents || [], sourceType: "Cloudflare AutoRAG" },
               checklistResult: { checklist: parsedData.checklist || [] },
             });
+            setCurrentQueryId(queryId);
             triggerRefresh(); // Refresh history after saving
           } catch (error) {
             console.error('Error saving query history:', error);
@@ -290,12 +295,12 @@ export function UnifiedLegalAssistant() {
   return (
       <ScrollArea className="flex-1 h-full bg-background">
         <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-screen-2xl">
-          <Card className="assistant-card">
-            <CardHeader>
-              <CardTitle className="text-xl md:text-2xl font-lora">Legal Query Input</CardTitle>
-              <CardDescription>Enter your legal question or describe your case details below. Uses Cloudflare AutoRAG by default, or your custom library if switched on.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <Card className="assistant-card">
+        <CardHeader>
+          <CardTitle className="flex items-center text-lg font-lora"><Scale className="mr-2 h-5 w-5 text-primary" />Legal Analysis</CardTitle>
+          {precedentsResult && <CardDescription className="text-xs pt-1">Precedents sourced from: {precedentsResult.sourceType}</CardDescription>}
+        </CardHeader>
+        <CardContent className="min-h-[450px] flex-1 flex flex-col">
               <Textarea
                   placeholder="Describe your legal situation, case, or question here..."
                   value={mainQuery}
@@ -327,26 +332,35 @@ export function UnifiedLegalAssistant() {
             </CardContent>
           </Card>
 
-          {/* Legal Analysis covering the full width */}
-          <Card className="assistant-card">
+          {/* Legal Analysis covering the full width - FIXED LAYOUT */}
+          <Card className="assistant-card flex flex-col" style={{ minHeight: '600px' }}>
             <CardHeader>
               <CardTitle className="flex items-center text-lg font-lora"><Scale className="mr-2 h-5 w-5 text-primary" />Legal Analysis</CardTitle>
               {precedentsResult && <CardDescription className="text-xs pt-1">Precedents sourced from: {precedentsResult.sourceType}</CardDescription>}
             </CardHeader>
-            <CardContent className="min-h-[450px] flex-1 flex flex-col">
+            <CardContent className="flex-1 flex flex-col" style={{ height: 'calc(100% - 80px)' }}>
               {isProcessingQuery && !lawsResult && !precedentsResult && !checklistResult && renderLoadingState()}
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1" style={{ height: '100%' }}>
                 <div className="space-y-6">
                   {/* Applicable Laws Section */}
                   <div>
                     <h3 className="font-semibold mb-2">Applicable Laws:</h3>
                     {lawsResult ? (
                         lawsResult.laws.length > 0 ? (
-                            <ul className="list-disc pl-5 space-y-1 text-sm">
-                              {lawsResult.laws.map((law, index) => (
-                                  <li key={index}>{law}</li>
-                              ))}
-                            </ul>
+                            <>
+                              <ul className="list-disc pl-5 space-y-1 text-sm">
+                                {lawsResult.laws.map((law, index) => (
+                                    <li key={index}>{law}</li>
+                                ))}
+                              </ul>
+                              {currentQueryId && (
+                                <FeedbackComponent 
+                                  queryId={currentQueryId} 
+                                  section="laws" 
+                                  label="Rate the applicable laws"
+                                />
+                              )}
+                            </>
                         ) : <p className="text-sm text-muted-foreground">No specific laws or articles identified.</p>
                     ) : !isProcessingQuery ? <p className="text-sm text-muted-foreground">Applicable laws and articles will appear here.</p> : null}
                   </div>
@@ -356,21 +370,30 @@ export function UnifiedLegalAssistant() {
                     <h3 className="font-semibold mb-2">Similar Precedents:</h3>
                     {precedentsResult ? (
                         precedentsResult.precedents.length > 0 ? (
-                            <div className="space-y-3">
-                              {precedentsResult.precedents.map((p, index) => (
-                                  <div key={index} className="p-3 border border-border/70 rounded-lg bg-background/40">
-                                    <p className="font-semibold text-base font-lora">{p.caseName}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Citation: {p.citation}</p>
-                                    <p className="text-sm mt-2">{p.summary}</p>
-                                    {p.differences && (
-                                        <div className="mt-2 pt-2 border-t border-border/50">
-                                          <p className="text-xs font-semibold text-accent">Notable Differences:</p>
-                                          <p className="text-xs text-accent/80">{p.differences}</p>
-                                        </div>
-                                    )}
-                                  </div>
-                              ))}
-                            </div>
+                            <>
+                              <div className="space-y-3">
+                                {precedentsResult.precedents.map((p, index) => (
+                                    <div key={index} className="p-3 border border-border/70 rounded-lg bg-background/40">
+                                      <p className="font-semibold text-base font-lora">{p.caseName}</p>
+                                      <p className="text-xs text-muted-foreground mt-1">Citation: {p.citation}</p>
+                                      <p className="text-sm mt-2">{p.summary}</p>
+                                      {p.differences && (
+                                          <div className="mt-2 pt-2 border-t border-border/50">
+                                            <p className="text-xs font-semibold text-accent">Notable Differences:</p>
+                                            <p className="text-xs text-accent/80">{p.differences}</p>
+                                          </div>
+                                      )}
+                                    </div>
+                                ))}
+                              </div>
+                              {currentQueryId && (
+                                <FeedbackComponent 
+                                  queryId={currentQueryId} 
+                                  section="precedents" 
+                                  label="Rate the precedents"
+                                />
+                              )}
+                            </>
                         ) : <p className="text-sm text-muted-foreground">No relevant precedents found.</p>
                     ) : !isProcessingQuery ? <p className="text-sm text-muted-foreground">Relevant past court cases will appear here.</p> : null}
                   </div>
@@ -380,14 +403,34 @@ export function UnifiedLegalAssistant() {
                     <h3 className="font-semibold mb-2">Procedural Checklist:</h3>
                     {checklistResult ? (
                         checklistResult.checklist.length > 0 ? (
-                            <ul className="list-decimal pl-5 space-y-1 text-sm">
-                              {checklistResult.checklist.map((item, index) => (
-                                  <li key={index}>{item}</li>
-                              ))}
-                            </ul>
+                            <>
+                              <ul className="list-decimal pl-5 space-y-1 text-sm">
+                                {checklistResult.checklist.map((item, index) => (
+                                    <li key={index}>{item}</li>
+                                ))}
+                              </ul>
+                              {currentQueryId && (
+                                <FeedbackComponent 
+                                  queryId={currentQueryId} 
+                                  section="checklist" 
+                                  label="Rate the checklist"
+                                />
+                              )}
+                            </>
                         ) : <p className="text-sm text-muted-foreground">No procedural checklist generated.</p>
                     ) : !isProcessingQuery ? <p className="text-sm text-muted-foreground">A procedural checklist based on your query will appear here.</p> : null}
                   </div>
+                  
+                  {/* Overall Feedback Section */}
+                  {currentQueryId && lawsResult && precedentsResult && checklistResult && (
+                    <div className="mt-6 pt-4 border-t border-border">
+                      <FeedbackComponent 
+                        queryId={currentQueryId} 
+                        section="overall" 
+                        label="Rate the overall response"
+                      />
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>
