@@ -1,5 +1,6 @@
 # NYAI - AI Legal Assistant
 
-This is a NextJS starter for NYAI in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx for the landing page and src/app/assistant/page.tsx for the main application.
+This is a project developed by Team NyAI for Bharat Gen AI Hackathon. 
+This Legal Assistant can Retrive Relveant Precedent, Define Applicable laws and generate a procedural Checklist for the User Based on its own legal document dataset.
+Users also have the option to put in their own documents to generate more relevent response.
+This tool also provides the functionality of simplifying complex legal documets for the user.
