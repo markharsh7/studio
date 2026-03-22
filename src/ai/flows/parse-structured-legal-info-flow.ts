@@ -10,6 +10,8 @@
 
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
+import { enhanceCitations } from '@/services/citation-service';
+
 
 const ParseStructuredLegalInfoInputSchema = z.object({
   rawText: z.string().describe('The raw text output from an AI, expected to contain legal information.'),
@@ -31,7 +33,36 @@ const ParseStructuredLegalInfoOutputSchema = z.object({
 export type ParseStructuredLegalInfoOutput = z.infer<typeof ParseStructuredLegalInfoOutputSchema>;
 
 export async function parseStructuredLegalInfo(input: ParseStructuredLegalInfoInput): Promise<ParseStructuredLegalInfoOutput> {
-  return parseStructuredLegalInfoFlow(input);
+  // First, parse the raw text using the existing flow
+  const parsedData = await parseStructuredLegalInfoFlow(input);
+  
+  // If there are precedents, enhance their citations
+  if (parsedData.precedents && parsedData.precedents.length > 0) {
+    // Extract case names
+    const caseNames = parsedData.precedents.map(p => p.caseName);
+    
+    // Get enhanced citations
+    const citationMap = await enhanceCitations(caseNames);
+    
+    // Update precedents with enhanced citations
+    const enhancedPrecedents = parsedData.precedents.map(precedent => {
+      const enhancedCitation = citationMap.get(precedent.caseName);
+      if (enhancedCitation && enhancedCitation !== 'Citation enhancement failed') {
+        return {
+          ...precedent,
+          citation: enhancedCitation,
+        };
+      }
+      return precedent;
+    });
+    
+    return {
+      ...parsedData,
+      precedents: enhancedPrecedents,
+    };
+  }
+  
+  return parsedData;
 }
 
 const prompt = ai.definePrompt({

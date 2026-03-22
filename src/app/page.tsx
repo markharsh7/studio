@@ -19,8 +19,8 @@ function LandingHeader() {
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
           <Image 
-            src="/images/Emblem-of-India-01.svg"
-            alt="Emblem of India"
+            src="/images/logo.svg"
+            alt="logo"
             width={32}
             height={32}
             className="text-accent"
@@ -44,25 +44,6 @@ function LandingHeader() {
         
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-4 text-sm lg:gap-6">
-          <Link
-            href="#features"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            Features
-          </Link>
-          <Link
-            href="#how-it-works"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            How It Works
-          </Link>
-          <Link
-            href="#pricing"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            Pricing
-          </Link>
-          
           {user ? (
             <>
               <Button size="sm" asChild>
@@ -88,28 +69,6 @@ function LandingHeader() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-background border-b">
           <div className="flex flex-col p-4 space-y-4">
-            <Link
-              href="#features"
-              className="transition-colors hover:text-foreground/80 text-foreground/60 py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Features
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="transition-colors hover:text-foreground/80 text-foreground/60 py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              How It Works
-            </Link>
-            <Link
-              href="#pricing"
-              className="transition-colors hover:text-foreground/80 text-foreground/60 py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            
             <div className="flex flex-col space-y-2 pt-2">
               {user ? (
                 <>
@@ -179,11 +138,11 @@ export default function LandingPage() {
                 </Button>
               </div>
               <div className="pt-6 text-sm text-foreground/60">
-                <p>Trusted by leading law chambers in India</p>
+                <p></p>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mt-2">
                   <div className="flex items-center gap-2">
                     <Landmark className="h-5 w-5 text-accent" />
-                    <span>SUPREME COURT BAR</span>
+                    <span>National law University</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Building className="h-5 w-5 text-accent" />
@@ -194,11 +153,11 @@ export default function LandingPage() {
             </div>
             <Card className="p-8 bg-card shadow-xl rounded-xl flex flex-col items-center justify-center space-y-6 min-h-[300px] md:min-h-[400px] mt-8 lg:mt-0">
               <Image 
-                src="/images/Emblem-of-India-01.svg"
-                alt="Emblem of India"
+                src="/images/logo.svg"
+                alt="logo"
                 width={80}
                 height={80}
-                className="text-primary"
+                className="text-primary ml-1"
               />
               <h2 className="text-3xl font-bold text-center font-lora text-primary">NYAI</h2>
               <p className="text-center text-foreground/80">
